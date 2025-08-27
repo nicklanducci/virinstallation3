@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <title>Vertical Live Text x4 • Sentence-Triggered Bursts</title>
+  <title>Vertical Live Text x4 • Sentence-Triggered Bursts (JPG)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     html, body { height: 100%; margin: 0; background:#000; color:#fff; overflow:hidden; }
@@ -16,8 +16,8 @@
       overflow: hidden; position: relative;
       display: flex; justify-content: center; background:#000;
     }
-    .viewport.mode-left  { align-items: flex-end;  } /* nuove parole in basso */
-    .viewport.mode-spine { align-items: flex-start;} /* prima parola in alto  */
+    .viewport.mode-left  { align-items: flex-end; }
+    .viewport.mode-spine { align-items: flex-start;}
 
     .line {
       writing-mode: vertical-rl;
@@ -84,29 +84,26 @@
   </div>
 
   <script>
-    /* ===== Readability & Scroll ===== */
     const CHAR_MS=170, SPACE_MS=280, COMMA_MS=520, PERIOD_MS=1000, DASH_MS=650;
-    const LEFT_BOTTOM_ROOM_PX=40;  // per colonne 1 & 3
-    const SPINE_TOP_ROOM_PX=0;     // per colonne 2 & 4
+    const LEFT_BOTTOM_ROOM_PX=40, SPINE_TOP_ROOM_PX=0;
     const LERP_BASE=0.06, LERP_BOOST=0.10, LAG_THRESHOLD=36;
     const REDUCED_MOTION=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    /* ===== Bursts (unique per-frame; unique across columns while active) ===== */
-    const BURST_DIR="images2";       // images2/1.png … 96.png
+    const BURST_DIR="images2";   // cartella con 1.jpg … 96.jpg
     const BURST_COUNT=96;
     const BURST_MIN=20, BURST_MAX=60;
     const BURST_FRAME_MS=140;
-    const ACTIVE_IMAGES=new Set();           // numeri bloccati globalmente finché in uso
+    const ACTIVE_IMAGES=new Set();
 
     function releaseImages(arr){ for (const n of arr) ACTIVE_IMAGES.delete(n); }
     function candidatePaths(n){
       const s2=n.toString().padStart(2,"0");
-      const v=Date.now()+Math.random(); // cache-busting
+      const v=Date.now()+Math.random();
       return [
-        `${BURST_DIR}/${n}.png?v=${v}`,
-        `${BURST_DIR}/${n}.PNG?v=${v}`,
-        `${BURST_DIR}/${s2}.png?v=${v}`,
-        `${BURST_DIR}/${s2}.PNG?v=${v}`,
+        `${BURST_DIR}/${n}.jpg?v=${v}`,
+        `${BURST_DIR}/${n}.JPG?v=${v}`,
+        `${BURST_DIR}/${s2}.jpg?v=${v}`,
+        `${BURST_DIR}/${s2}.JPG?v=${v}`,
       ];
     }
     function loadFirstAvailable(paths){
@@ -119,7 +116,6 @@
     }
     const rndInt=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
     const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
-
     function delayFor(ch){
       if (ch===" ") return CHAR_MS+SPACE_MS;
       if (/[,\u061B;]/.test(ch)) return CHAR_MS+COMMA_MS;
@@ -128,11 +124,8 @@
       if (ch==="\u2026") return CHAR_MS+PERIOD_MS;
       return CHAR_MS;
     }
+    const SENTENCE_END_RE=/[.!?…]+(?:["”’']*)\s*$/;
 
-    /* ===== Sentence boundary detection (., !, ?, …) ===== */
-    const SENTENCE_END_RE = /[.!?…]+(?:["”’']*)\s*$/; // fine frase alla fine del testo/buffer
-
-    /* ===== One streaming column ===== */
     function setupStreamColumn({ sid, mode, viewportId, lineId, textId, burstId }) {
       const viewport=document.getElementById(viewportId);
       const line=document.getElementById(lineId);
@@ -140,26 +133,18 @@
       const burstBox=document.getElementById(burstId);
       const burstImg=burstBox.querySelector("img");
 
-      let buffer="";           // chars da riprodurre
-      let playing=false;       // player attivo
-      let es=null;             // EventSource
-      let targetY=0, currentY=0;
-      let scrolling=false;
-
-      // Per tagliare lo stream alla prima frase completa
-      let finishingThisSentence=false; // stiamo chiudendo alla fine frase
-      let cutAtLength=null;            // lunghezza (testo+buffer) dove fermarsi
+      let buffer="", playing=false, es=null;
+      let targetY=0, currentY=0, scrolling=false;
+      let finishingThisSentence=false, cutAtLength=null;
 
       function computeTargetY(){
         const contentH=line.scrollHeight, viewH=viewport.clientHeight;
         if (mode==="left"){
           const allowedH=Math.max(0, viewH-LEFT_BOTTOM_ROOM_PX);
-          const excess=contentH-allowedH;
-          targetY=excess>0?-excess:0;
+          targetY=contentH-allowedH>0 ? -(contentH-allowedH) : 0;
         } else {
           const allowedH=Math.max(0, viewH-SPINE_TOP_ROOM_PX);
-          const excess=contentH-allowedH;
-          targetY=excess>0?-excess:0;
+          targetY=contentH-allowedH>0 ? -(contentH-allowedH) : 0;
         }
       }
       function applyTransform(){
@@ -167,8 +152,7 @@
         else               line.style.transform=`translateY(${currentY}px)`;
       }
       function animateScroll(){
-        if (scrolling) return;
-        scrolling=true;
+        if (scrolling) return; scrolling=true;
         (function loop(){
           requestAnimationFrame(loop);
           if (REDUCED_MOTION) currentY=targetY;
@@ -183,46 +167,28 @@
       animateScroll();
 
       function playLoop(){
-        if (playing) return;
-        playing=true;
+        if (playing) return; playing=true;
         (function step(){
-          // Stop se buffer vuoto o se abbiamo raggiunto il cutAtLength
-          if (!buffer.length) { playing=false; return; }
-
-          // Se dobbiamo tagliare a una lunghezza specifica (prima frase), rispettiamola
+          if (!buffer.length){ playing=false; return; }
           if (cutAtLength!=null){
-            const already = textSpan.textContent.length;
-            if (already >= cutAtLength){
-              playing=false; buffer=""; // tutto suonato
-              // ora partirà burst (gestito da onStreamCut)
-              return;
-            }
+            const already=textSpan.textContent.length;
+            if (already>=cutAtLength){ playing=false; buffer=""; return; }
           }
-
           const ch=buffer[0]; buffer=buffer.slice(1);
           textSpan.textContent += (ch==="\n") ? " " : ch;
-
           computeTargetY();
           setTimeout(step, delayFor(ch));
         })();
       }
 
       function cutStreamAtSentenceEndIfSeen(){
-        if (finishingThisSentence) return; // già in corso
-        const preview = textSpan.textContent + buffer;
+        if (finishingThisSentence) return;
+        const preview=textSpan.textContent+buffer;
         if (SENTENCE_END_RE.test(preview)){
-          // trova l’indice del confine (fine stringa attuale)
-          cutAtLength = preview.length;
-          finishingThisSentence = true;
-          // chiudi lo stream: non vogliamo altre delte oltre la prima frase
-          if (es){ try{ es.close(); }catch{} es=null; }
-          // quando il player svuota fino a cutAtLength, scatterà il burst
-          (async ()=>{
-            // attendi che il player consumi fino a cut
-            const waitUntil = async () => {
-              while (textSpan.textContent.length < cutAtLength){ await sleep(30); }
-            };
-            await waitUntil();
+          cutAtLength=preview.length; finishingThisSentence=true;
+          if (es){ try{es.close();}catch{} es=null; }
+          (async()=>{
+            while(textSpan.textContent.length<cutAtLength){ await sleep(30); }
             await runBurstThenRestart();
           })();
         }
@@ -230,127 +196,72 @@
 
       async function runBurstThenRestart(){
         await runBurstGlobalUnique();
-        // reset flags per la prossima frase
         finishingThisSentence=false; cutAtLength=null;
-        // ricomincia nuovo stream con stesso prompt
         startStream(currentPromptGlobal);
       }
 
       async function runBurstGlobalUnique(){
-        let frames = rndInt(BURST_MIN, BURST_MAX);
+        let frames=rndInt(BURST_MIN,BURST_MAX);
+        let free=[]; for(let n=1;n<=BURST_COUNT;n++) if(!ACTIVE_IMAGES.has(n)) free.push(n);
+        if (free.length<frames){ free=Array.from({length:BURST_COUNT},(_,i)=>i+1); }
+        for(let i=free.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [free[i],free[j]]=[free[j],free[i]]; }
+        const chosen=free.slice(0,frames); chosen.forEach(n=>ACTIVE_IMAGES.add(n));
 
-        // crea lista di candidati liberi
-        let free=[];
-        for (let n=1; n<=BURST_COUNT; n++) if (!ACTIVE_IMAGES.has(n)) free.push(n);
-        if (free.length < frames){ free = Array.from({length:BURST_COUNT},(_,i)=>i+1); } // fallback
-        // shuffle
-        for (let i=free.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [free[i],free[j]]=[free[j],free[i]]; }
-        const chosen = free.slice(0, frames);
-        chosen.forEach(n=> ACTIVE_IMAGES.add(n));
-
-        burstBox.style.display="flex";
-        burstBox.classList.remove("fallback");
-        line.style.visibility="hidden";
-
-        for (const n of chosen){
-          try {
-            const src=await loadFirstAvailable(candidatePaths(n));
-            burstImg.src = src;
-            burstBox.classList.remove("fallback");
-          } catch {
-            burstImg.removeAttribute("src");
-            burstBox.classList.add("fallback");
-          }
+        burstBox.style.display="flex"; line.style.visibility="hidden";
+        for(const n of chosen){
+          try{ burstImg.src=await loadFirstAvailable(candidatePaths(n)); burstBox.classList.remove("fallback"); }
+          catch{ burstImg.removeAttribute("src"); burstBox.classList.add("fallback"); }
           await sleep(BURST_FRAME_MS);
         }
-
-        burstBox.style.display="none";
-        line.style.visibility="visible";
-        releaseImages(chosen);
+        burstBox.style.display="none"; line.style.visibility="visible"; releaseImages(chosen);
       }
 
       function startStream(prompt){
-        // reset UI / stato frase
         textSpan.textContent=""; buffer=""; targetY=0; currentY=0;
-        finishingThisSentence=false; cutAtLength=null;
-        applyTransform(); computeTargetY();
+        finishingThisSentence=false; cutAtLength=null; applyTransform(); computeTargetY();
+        if (es){ try{es.close();}catch{} es=null; }
+        const url=`/stream?prompt=${encodeURIComponent(prompt)}&sid=${encodeURIComponent(sid)}`;
+        es=new EventSource(url);
 
-        if (es){ try{ es.close(); }catch{} es=null; }
-
-        // Apri SSE (usa stesso prompt per tutte, ma sid diverso)
-        const url = `/stream?prompt=${encodeURIComponent(prompt)}&sid=${encodeURIComponent(sid)}`;
-        es = new EventSource(url);
-
-        es.addEventListener("response.output_text.delta", (e)=>{
-          try{
-            const msg = JSON.parse(e.data);
-            if (typeof msg.delta === "string"){
-              buffer += msg.delta;
-              playLoop();
-              cutStreamAtSentenceEndIfSeen(); // controlla se la prima frase è completa
-            }
+        es.addEventListener("response.output_text.delta",e=>{
+          try{ const msg=JSON.parse(e.data);
+            if(typeof msg.delta==="string"){ buffer+=msg.delta; playLoop(); cutStreamAtSentenceEndIfSeen(); }
           }catch{}
         });
-
-        // Se il server termina prima che troviamo un punto, chiudiamo “naturalmente”
-        es.addEventListener("response.completed", async ()=>{
-          try{ es.close(); }catch{} es=null;
-          // se non abbiamo fatto cut su una frase, avvia burst ora
-          if (!finishingThisSentence){
-            // lascia consumare eventuale buffer
-            while (buffer.length>0){ await sleep(30); }
+        es.addEventListener("response.completed",async()=>{
+          try{es.close();}catch{} es=null;
+          if(!finishingThisSentence){
+            while(buffer.length>0){ await sleep(30); }
             await runBurstThenRestart();
           }
         });
-
-        es.onmessage = (e)=>{
-          if (e.data === "[DONE]"){ try{ es.close(); }catch{} es=null; return; }
-          try{
-            const msg=JSON.parse(e.data);
-            if (typeof msg.delta === "string"){
-              buffer += msg.delta;
-              playLoop();
-              cutStreamAtSentenceEndIfSeen();
-            }
+        es.onmessage=e=>{
+          if(e.data==="[DONE]"){ try{es.close();}catch{} es=null; return; }
+          try{ const msg=JSON.parse(e.data);
+            if(typeof msg.delta==="string"){ buffer+=msg.delta; playLoop(); cutStreamAtSentenceEndIfSeen(); }
           }catch{}
         };
-
-        es.onerror = ()=>{
-          try{ es.close(); }catch{} es=null;
-          // prova a ripartire dopo un attimo
-          setTimeout(()=> startStream(prompt), 1200);
-        };
+        es.onerror=()=>{ try{es.close();}catch{} es=null; setTimeout(()=>startStream(prompt),1200); };
       }
 
       return { startStream };
     }
 
-    /* ===== Wire 4 columns ===== */
     const col1=setupStreamColumn({ sid:"col1", mode:"left",  viewportId:"viewport1", lineId:"line1", textId:"text1", burstId:"burst1" });
     const col2=setupStreamColumn({ sid:"col2", mode:"spine", viewportId:"viewport2", lineId:"line2", textId:"text2", burstId:"burst2" });
     const col3=setupStreamColumn({ sid:"col3", mode:"left",  viewportId:"viewport3", lineId:"line3", textId:"text3", burstId:"burst3" });
     const col4=setupStreamColumn({ sid:"col4", mode:"spine", viewportId:"viewport4", lineId:"line4", textId:"text4", burstId:"burst4" });
 
-    /* ===== Controls ===== */
-    const inputEl=document.getElementById("q");
-    const goBtn=document.getElementById("go");
-    let currentPromptGlobal = "Scrivi una singola frase forte e concettuale sull’arte, adatta a una lettura verticale, senza andare a capo.";
+    const inputEl=document.getElementById("q"); const goBtn=document.getElementById("go");
+    let currentPromptGlobal="Scrivi una singola frase concettuale sull’arte, senza andare a capo.";
+    inputEl.value=currentPromptGlobal;
 
-    inputEl.value = currentPromptGlobal;
-
-    function startAll(){
-      currentPromptGlobal = (inputEl.value || currentPromptGlobal).trim();
-      col1.startStream(currentPromptGlobal);
-      col2.startStream(currentPromptGlobal);
-      col3.startStream(currentPromptGlobal);
-      col4.startStream(currentPromptGlobal);
-    }
+    function startAll(){ currentPromptGlobal=(inputEl.value||currentPromptGlobal).trim();
+      col1.startStream(currentPromptGlobal); col2.startStream(currentPromptGlobal);
+      col3.startStream(currentPromptGlobal); col4.startStream(currentPromptGlobal); }
     startAll();
-
-    goBtn.addEventListener("click", startAll);
-    inputEl.addEventListener("keydown", e=>{ if (e.key==="Enter") startAll(); });
-
-    addEventListener("resize", ()=>{ /* ogni colonna autogestisce lo scroll */ });
+    goBtn.addEventListener("click",startAll);
+    inputEl.addEventListener("keydown",e=>{ if(e.key==="Enter") startAll(); });
   </script>
 </body>
 </html>
