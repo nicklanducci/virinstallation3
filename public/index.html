@@ -253,7 +253,7 @@
     const col4=setupStreamColumn({ sid:"col4", mode:"spine", viewportId:"viewport4", lineId:"line4", textId:"text4", burstId:"burst4" });
 
     const inputEl=document.getElementById("q"); const goBtn=document.getElementById("go");
-    let currentPromptGlobal="Scrivi una singola frase concettuale sull’arte, senza andare a capo.";
+    let currentPromptGlobal="Scrivi una singola frase, senza andare a capo.";
     inputEl.value=currentPromptGlobal;
 
     function startAll(){ currentPromptGlobal=(inputEl.value||currentPromptGlobal).trim();
