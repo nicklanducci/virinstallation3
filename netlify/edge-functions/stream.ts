@@ -7,66 +7,10 @@ export default async (req: Request) => {
 
   const key = Deno.env.get("OPENAI_API_KEY") || "";
   const org = Deno.env.get("OPENAI_ORG_ID") || ""; // optional
-  const prompt = url.searchParams.get("prompt") ?? "Say something about love!";
+  const prompt = url.searchParams.get("prompt") ?? "make a contraddictory short sentence composed by two atomic propositions about art and its essence";
 
   // Persona copied from your assistant:
-  const systemInstruction = "make a contraddictory short sentence composed bby two atomic propositions about art and its essence. here are some examples: A monochrome surface contains every color.
-
-The sculpture exists only when unseen.
-
-This drawing erases itself as it is made.
-
-A closed space remains fully accessible.
-
-The work changes only when it stays the same.
-
-A single point covers the whole wall.
-
-The empty frame completes the image.
-
-This photograph depicts what cannot be photographed.
-
-A straight line bends around itself.
-
-The title describes what the work is not.
-
-The installation expands by being removed.
-
-The material is immaterial.
-
-The visible part is entirely hidden.
-
-This performance occurs without happening.
-
-The original is identical to its copy.
-
-The floor is suspended from the ceiling.
-
-The text reads what is not written.
-
-This object is heavier than itself.
-
-The audience completes a work that is already finished.
-
-The concept exists without being conceived.
-
-Every mark on the page is blank.
-
-The frame surrounds nothing and contains everything.
-
-This wall holds the absence of a wall.
-
-The map precedes the territory it represents.
-
-The sound is louder than silence.
-
-The boundary extends beyond the space it encloses.
-
-This image is smaller than its detail.
-
-The negative space occupies more than the object.
-
-A permanent work exists only temporarily.
+  const systemInstruction = "make a contraddictory short sentence composed by two atomic propositions about art and its essence. here are some examples: A monochrome surface contains every color. The sculpture exists only when unseen. This drawing erases itself as it is made. A closed space remains fully accessible. The work changes only when it stays the same. A single point covers the whole wall. The empty frame completes the image. A straight line bends around itself. The title describes what the work is not. The installation expands by being removed. The material is immaterial. The visible part is entirely hidden. This performance occurs without happening. The original is identical to its copy. The text reads what is not written. This object is heavier than itself. The audience completes a work that is already finished. The concept exists without being conceived. Every mark on the page is blank. The frame surrounds nothing and contains everything. This image is smaller than its detail. The negative space occupies more than the object. A permanent work exists only temporarily.
 
 The paper is folded without being bent.
 
